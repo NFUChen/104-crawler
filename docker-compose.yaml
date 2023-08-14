@@ -1,0 +1,50 @@
+version: "3.3"
+services:
+
+  crawler-db:
+    image: mongo:5.0.3
+    container_name: crawler-db
+    restart: always
+    ports:
+      - "27301:27017"
+    volumes:
+      - mongo:/data/db
+  firefox:
+    restart: always
+    container_name: firefox
+    image: selenium/standalone-firefox
+    shm_size: 4gb
+    ports:
+      - "4444:4444"
+      # - "7900:7900"
+      - "5905:5900"
+    environment:
+      - SE_VNC_NO_PASSWORD=1 # NO_PASSWORD
+
+  crawler:
+    container_name: crawler
+    restart: always
+    build:
+      context: ./crawler
+      dockerfile: dockerfile
+    depends_on:
+      - crawler-db
+      - firefox
+    ports:
+      - "8099:8080"
+    volumes:
+      - //var/run/docker.sock:/var/run/docker.sock
+    
+  dsp:
+    container_name: dsp
+    restart: always
+    build:
+      context: ./dsp
+      dockerfile: dockerfile
+    ports:
+      - "5195:5173"
+    volumes:
+      - ./dsp/src:/app/src
+    
+volumes:
+  mongo:
